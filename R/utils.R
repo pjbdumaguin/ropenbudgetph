@@ -34,9 +34,9 @@ generate_destfiles <- function(download_links) {
 }))
   
   destfiles <- ifelse(
-  grepl("GAA", dl_links),
-  paste0(directories[1], basename(dl_links)),
-  paste0(directories[2], basename(dl_links))
+  grepl("GAA", download_links),
+  paste0(directories[1], basename(download_links)),
+  paste0(directories[2], basename(download_links))
 )
 }
 
