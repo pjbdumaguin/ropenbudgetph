@@ -1,19 +1,23 @@
 # look for the most recent fiscal year a document is available
 check_recent_year <- function(doc_type) {
-  # fetch budget pages
+  if (!curl::has_internet()) {
+    stop("No internet connection")
+  }
   pages <- get_budget_pages(doc_type)
-  year <- gsub(".*/(\\d{4})/.*", "\\1", pages) |> 
-    as.numeric() |> 
+  year <- gsub(".*/(\\d{4})/.*", "\\1", pages) |>
+    as.numeric() |>
     max()
   return(year)
 }
 
-
 download_docs <- function(type, year) {
   download_links <- get_download_link(type, year)
   destfiles <- generate_destfiles(download_links)
-  mapply(\(link, destfile) download.file(link, destfile),
-  download_links, destfiles)
+  mapply(
+    \(link, destfile) download.file(link, destfile),
+    download_links,
+    destfiles
+  )
 }
 
 get_download_link <- function(doc_type, year) {
@@ -24,20 +28,20 @@ get_download_link <- function(doc_type, year) {
 }
 
 generate_destfiles <- function(download_links) {
-  base_dir <- tools::R_user_dir("ropenbudgetph", which = "data")
+  base_dir <- tools::R_user_dir("ropenbudgetph", "data")
   directories <- paste0(base_dir, c("gaa", "nep"), "/")
-  
+
   invisible(lapply(directories, \(directory) {
-  if (!dir.exists(directory)) {
-    dir.create(directory, recursive = TRUE)
-  }
-}))
-  
+    if (!dir.exists(directory)) {
+      dir.create(directory, recursive = TRUE)
+    }
+  }))
+
   destfiles <- ifelse(
-  grepl("GAA", download_links),
-  paste0(directories[1], basename(download_links)),
-  paste0(directories[2], basename(download_links))
-)
+    grepl("GAA", download_links),
+    paste0(directories[1], basename(download_links)),
+    paste0(directories[2], basename(download_links))
+  )
 }
 
 get_budget_pages <- function(doc_type, year = NULL) {
@@ -62,61 +66,67 @@ search_link <- function(page_url, pattern, year = NULL) {
     xml2::xml_find_all("//a") |>
     xml2::xml_attr("href")
 
-  if(!is.null(year)) # filter for year if not null
+  if (!is.null(year)) {
+    # filter for year if not null
     link <- grepv(pattern = paste(year, collapse = "|"), x = link)
-  
+  }
+
   link <- grepv(pattern = pattern, x = link) |> unique()
 
   return(link)
 }
 
-# custom fetching of html with caching in mind
+# custom fetching of html file with caching in mind
+# This is a workaround for DBM server's no-store and no-cache Cache Control directives
+# httr2::req_cache don't work
 fetch_html <- function(url) {
-  cache_dir <- tools::R_user_dir("ropenbudgetph", which = "cache")
-  if (!dir.exists(cache_dir))
+  cache_dir <- file.path(tools::R_user_dir("ropenbudgetph", "cache"))
+  if (!dir.exists(cache_dir)) {
     dir.create(cache_dir, recursive = TRUE)
-  filename <- paste0(gsub("[^a-zA-Z0-9]", "_", url), ".rds")
-  cached_file <- file.path(cache_dir, filename)
+  }
+  cache_file <- paste0(rlang::hash(url), ".rds")
+  cache_path <- file.path(cache_dir, cache_file)
+  cache_obj <- if (file.exists(cache_path)) readRDS(cache_path) else NULL
 
-  cached_obj <- if (file.exists(cached_file)) readRDS(cached_file) else NULL
-
-  req <- httr2::request(url) #|>
-    # httr2::req_user_agent("ropenbudgetph/0.9000")
-
-  # add cache-related http headers to request object
-  if (!is.null(cached_obj) && !is.null(cached_obj$headers)) {
-    headers_list <- list()
-    if (!is.null(cached_obj$headers$etag))
-      headers_list[["if-none-match"]] <- cached_obj$headers$etag
-    if (!is.null(cached_obj$headers$`last-modified`))
-      headers_list[["if-modified-since"]] <- cached_obj$headers$`last-modified`
-    if(length(headers_list) > 0)
-      req <- do.call(httr2::req_headers, c(list(req), headers_list))
+  if (!is.null(cache_obj)) {
+    cache_time <- cache_obj$dt
+    cache_age <- difftime(Sys.time(), cache_time, units = "days")
+    if (cache_age < 1) return(cache_obj$body)
   }
 
-  resp <- tryCatch(httr2::req_perform(req), error = function(e) e)
-
-  if (inherits(resp, "error")) {
-    if (!is.null(cached_obj)) return(cached_obj$body)
-    stop(resp)
+  if (!curl::has_internet()) {
+    warning("Offline: attempting cache-only fetch")
+    if (!is.null(cache_obj)) {
+      return(cache_obj$body)
+    }
+    stop("Offline and no cache available")
   }
+
+  req <- httr2::request(url)
+  resp <- tryCatch(
+    httr2::req_perform(req),
+    error = function(e) {
+      if (!is.null(cache_obj)) {
+        warning("Request error: ", e$message, ". Using stale cache.")
+        return(cache_obj$body)
+      }
+      stop("Request failed: ", e$message)
+    }
+  )
 
   status <- httr2::resp_status(resp)
-
-  # if not modified
-  if (status == 304 && !is.null(cached_obj)) {
-    return(cached_obj$body)
-  }
-
   if (status >= 200 && status < 300) {
     resp_body <- httr2::resp_body_html(resp)
-    resp_hdrs <- httr2::resp_headers(resp)
-    names(resp_hdrs) <- tolower(names(resp_hdrs))
-    saveRDS(list(body = resp_body, headers = resp_hdrs, fetched_at = Sys.time()), cached_file)
+    tryCatch(
+      saveRDS(list(body = resp_body, dt = Sys.time()), cache_path),
+      error = function(e) warning("Failed to update cache: ", e$message)
+    )
     return(resp_body)
   }
 
-  if (!is.null(cached_obj)) return(cached_obj$body)
-
-  stop("Failed to fetch and no cache available: ", url)
+  if (!is.null(cache_obj)) {
+    warning("HTTP ", status, " for ", url, ". Using stale cache.")
+    return(cache_obj$body)
+  }
+  stop("HTTP ", status, " for ", url, " and no cache available")
 }

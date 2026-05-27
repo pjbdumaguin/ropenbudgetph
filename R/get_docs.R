@@ -29,6 +29,7 @@
 #'   [get_gaa()] to download GAA documents
 #'   [get_nep()] to download NEP documents
 get_docs <- function(type = "all", year = "all") {
+  if (!curl::has_internet()) stop("No internet connection")
   if (type == "all") {
     type <- c("gaa", "nep")
   }
