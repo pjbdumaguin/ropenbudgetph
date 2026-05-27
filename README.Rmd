@@ -2,29 +2,49 @@
 output: github_document
 ---
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
 # ropenbudgetph
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of ropenbudgetph is to ...
+`ropenbudgetph` provides tools to download, convert, and consolidate [Philippine public budget datasets](https://www.dbm.gov.ph/index.php/budget) from the [Department of Budget and Management (DBM)](https://www.dbm.gov.ph). It supports bulk download of raw Excel (`.xlsx`) files for:
+
+- National Expenditure Program (NEP)
+- General Appropriations Act (GAA)
+
+for fiscal years from `2020` through the latest available year.
 
 ## Installation
 
-You can install the development version of ropenbudgetph like so:
+You can install the development version from [Github](https://github.com/):
 
 ``` r
-install.packages("remotes")
+# install.packages("remotes")
 remotes::install_github("pjbdumaguin/ropenbudgetph")
 ```
 
+## Usage
+- get_doc(): Download all available documents.
+- get_doc(type, year): Filter downloads by document type and year.
+- get_nep(), get_gaa(): Convenience functions to download specific datasets.
+
 ## Example
-
-This is a basic example which shows you how to solve a common problem:
-
-```{r example}
+``` r
 library(ropenbudgetph)
-## basic example code
+
+# Download all available documents
+get_doc()
+
+# Download GAA for 2022 and 2026
+get_doc(type = "gaa", year = c(2022, 2026))
+
+# Download all NEP files and GAA for 2020
+get_nep()
+get_gaa(year = 2020)
 ```
+
+## Features
+
+- Bulk download raw Excel files for NEP and GAA.
+- Convert Excel to CSV and Parquet.
+- Utilities to consolidate and standardize datasets using arrow.
