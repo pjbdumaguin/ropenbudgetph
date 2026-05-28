@@ -91,7 +91,9 @@ fetch_html <- function(url) {
   if (!is.null(cache_obj)) {
     cache_time <- cache_obj$dt
     cache_age <- difftime(Sys.time(), cache_time, units = "days")
-    if (cache_age < 1) return(cache_obj$body)
+    if (cache_age < 1) {
+      return(cache_obj$body)
+    }
   }
 
   if (!curl::has_internet()) {

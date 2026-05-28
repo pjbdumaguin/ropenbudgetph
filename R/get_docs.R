@@ -18,12 +18,11 @@
 #' @export
 #' @examples
 #' \dontrun{
-#'   get_docs()  # downloads all GAA and NEP Excel files from all the years available
-#' 
-#'   # equivalent calls----
-#'   get_docs("all", 2020:2024) # the year value will be recycled for each type
-#'   get_docs(c("gaa", "nep"), list(2020:2024, 2020:2024))
-#' 
+#' get_docs() # downloads all GAA and NEP Excel files from all the years available
+#'
+#' # equivalent calls----
+#' get_docs("all", 2020:2024) # the year value will be recycled for each type
+#' get_docs(c("gaa", "nep"), list(2020:2024, 2020:2024))
 #' }
 #' @seealso
 #'   [get_gaa()] to download GAA documents
@@ -38,7 +37,7 @@ get_docs <- function(type = "all", year = "all") {
       2020:check_recent_year(type)
     })
   }
-  if(!is.list(year)) {
+  if (!is.list(year)) {
     year <- as.list(year)
   }
   if (length(year) == 1) {
@@ -52,7 +51,7 @@ get_docs <- function(type = "all", year = "all") {
 }
 
 #' Download GAA documents
-#' 
+#'
 #' A wrapper for `get_docs(type = "gaa")`; this function downloads the
 #' General Appropriations Act (GAA) Excel files (.xlsx) from the
 #' Department of Budget and Management (DBM) website
@@ -64,14 +63,14 @@ get_docs <- function(type = "all", year = "all") {
 #' @export
 #' @examples
 #' \dontrun{
-#'   get_gaa() # Downloads all GAA files from 2020 onwards
+#' get_gaa() # Downloads all GAA files from 2020 onwards
 #' }
 get_gaa <- function(year = "all") {
   get_docs("gaa", year)
 }
 
 #' Download NEP documents
-#' 
+#'
 #' #' A wrapper for `get_docs(type = "nep")`; this function downloads the
 #' General Appropriations Act (GAA) Excel files (.xlsx) from the
 #' Department of Budget and Management (DBM) website
@@ -83,7 +82,7 @@ get_gaa <- function(year = "all") {
 #' @export
 #' @examples
 #' \dontrun{
-#'   get_nep() # Downloads all NEP files from 2020 onwards
+#' get_nep() # Downloads all NEP files from 2020 onwards
 #' }
 get_nep <- function(year = "all") {
   get_docs("nep", year)
