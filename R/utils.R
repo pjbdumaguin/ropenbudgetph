@@ -1,3 +1,5 @@
+DBM_URL <- "https://www.dbm.gov.ph"
+
 # look for the most recent fiscal year a document is available
 check_recent_year <- function(doc_type) {
   if (!curl::has_internet()) {
@@ -49,8 +51,7 @@ generate_destfiles <- function(download_links) {
 }
 
 get_budget_pages <- function(doc_type, year = NULL) {
-  base_url <- "https://www.dbm.gov.ph"
-  budget_page <- paste0(base_url, "/index.php/budget")
+  budget_page <- paste0(DBM_URL, "/index.php/budget")
   pattern <- generate_pattern(doc_type)
   pages <- search_link(budget_page, pattern, year)
   return(pages)
@@ -66,16 +67,17 @@ generate_pattern <- function(doc_type) {
 
 # returns all link if year = null
 search_link <- function(page_url, pattern, year = NULL) {
-  link <- xml2::read_html(fetch_html(page_url)) |>
+  links <- xml2::read_html(fetch_html(page_url)) |>
     xml2::xml_find_all("//a") |>
-    xml2::xml_attr("href")
+    xml2::xml_attr("href") |>
+    xml2::url_absolute(DBM_URL)
 
+  # filter year if not null
   if (!is.null(year)) {
-    # filter for year if not null
-    link <- grepv(pattern = paste(year, collapse = "|"), x = link)
+    links <- grepv(pattern = paste(year, collapse = "|"), x = links)
   }
 
-  link <- grepv(pattern = pattern, x = link) |> unique()
+  links <- grepv(pattern = pattern, x = links) |> unique()
 
-  return(link)
+  return(links)
 }
