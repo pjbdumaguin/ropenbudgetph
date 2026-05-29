@@ -20,10 +20,14 @@ download_docs <- function(type, year) {
   )
 }
 
-get_download_link <- function(doc_type, year) {
+get_download_link <- function(doc_type, year = NULL) {
   pages <- get_budget_pages(doc_type, year)
   pattern <- "xlsx?"
-  links <- pages |> vapply(\(page) search_link(page, pattern, year))
+  links <- if(!is.null(year)) {
+    lapply(pages, \(page) search_link(page, pattern, year))
+  } else {
+    lapply(pages, \(page) search_link(page, pattern))
+  }
   return(links)
 }
 
