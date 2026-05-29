@@ -37,7 +37,7 @@ fetch_html <- function(url) {
 
   status <- httr2::resp_status(resp)
   if (status >= 200 && status < 300) {
-    resp_body <- httr2::resp_body_html(resp)
+    resp_body <- httr2::resp_body_string(resp)
     tryCatch(
       saveRDS(list(body = resp_body, dt = Sys.time()), cache_path),
       error = function(e) warning("Failed to update cache: ", e$message)

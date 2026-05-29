@@ -62,7 +62,7 @@ generate_pattern <- function(doc_type) {
 
 # returns all link if year = null
 search_link <- function(page_url, pattern, year = NULL) {
-  link <- fetch_html(page_url) |>
+  link <- xml2::read_html(fetch_html(page_url)) |>
     xml2::xml_find_all("//a") |>
     xml2::xml_attr("href")
 
