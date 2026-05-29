@@ -29,7 +29,7 @@ get_download_link <- function(doc_type, year) {
 
 generate_destfiles <- function(download_links) {
   base_dir <- tools::R_user_dir("ropenbudgetph", "data")
-  directories <- paste0(base_dir, c("gaa", "nep"), "/")
+  directories <- file.path(base_dir, c("gaa", "nep"))
 
   invisible(lapply(directories, \(directory) {
     if (!dir.exists(directory)) {
@@ -39,8 +39,8 @@ generate_destfiles <- function(download_links) {
 
   destfiles <- ifelse(
     grepl("GAA", download_links),
-    paste0(directories[1], basename(download_links)),
-    paste0(directories[2], basename(download_links))
+    file.path(directories[1], basename(download_links)),
+    file.path(directories[2], basename(download_links))
   )
 }
 
