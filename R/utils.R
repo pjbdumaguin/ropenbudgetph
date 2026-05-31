@@ -24,10 +24,19 @@ download_docs <- function(type, year) {
   )
 }
 
-get_download_link <- function(doc_type, year = NULL) {
+get_download_links <- function(doc_type, year = NULL) {
   pages <- get_budget_pages(doc_type, year)
-  pattern <- "xlsx?"
-  links <- lapply(pages, \(page) search_link(page, pattern, year)[1])
+
+  links <- vapply(
+    pages,
+    function(page) {
+      links_per_page <- get_links(page)
+      target_link <- grepv("\\.xlsx?$", links_per_page)[1]
+      return(target_link)
+    },
+    character(length(pages))
+  )
+
   return(links)
 }
 
@@ -49,33 +58,27 @@ generate_destfiles <- function(download_links) {
 }
 
 get_budget_pages <- function(doc_type, year = NULL) {
-  budget_page <- paste0(DBM_URL, "/index.php/budget")
-  pattern <- generate_pattern(doc_type)
-  pages <- search_link(budget_page, pattern, year)
-  return(pages)
+  budget_main <- paste0(DBM_URL, "/index.php/budget")
+  budget_fys <- get_links(budget_main)
+
+  pattern <- gsub(" ", "-", DOC_TYPES[doc_type]) |> tolower()
+  pattern <- paste0("(?<=/\\d{4}/)(", pattern, ")", collapse = "|")
+  budget_fys <- grepv(pattern, budget_fys, perl = TRUE) |> unique()
+
+  # filter by year if not null
+  if (!is.null(year)) {
+    budget_fys <- grepv(paste(year, collapse = "|"), budget_fys)
+  }
+
+  return(budget_fys)
 }
 
-generate_pattern <- function(doc_type) {
-  patterns <- c(
-    gaa = "/general-appropriations",
-    nep = "\\d/national-expenditure"
-  )
-  return(paste(patterns[doc_type], collapse = "|"))
-}
-
-# returns all link if year = null
-search_link <- function(page_url, pattern, year = NULL) {
+# returns all links from a page
+get_links <- function(page_url) {
   links <- xml2::read_html(fetch_html(page_url)) |>
     xml2::xml_find_all("//a") |>
     xml2::xml_attr("href") |>
     xml2::url_absolute(DBM_URL)
-
-  # filter year if not null
-  if (!is.null(year)) {
-    links <- grepv(pattern = paste(year, collapse = "|"), x = links)
-  }
-
-  links <- grepv(pattern = pattern, x = links) |> unique()
 
   return(links)
 }
