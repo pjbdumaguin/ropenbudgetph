@@ -15,11 +15,11 @@ get_recent_yr <- function(doc_type) {
 }
 
 download_docs <- function(type, year) {
-  download_links <- get_download_link(type, year)
-  destfiles <- generate_destfiles(download_links)
+  links <- get_download_links(type, year)
+  destfiles <- generate_destfiles(type, links)
   mapply(
-    \(link, destfile) download.file(link, destfile),
-    download_links,
+    function(link, destfile) download.file(link, destfile),
+    links,
     destfiles
   )
 }
@@ -40,21 +40,19 @@ get_download_links <- function(doc_type, year = NULL) {
   return(links)
 }
 
-generate_destfiles <- function(download_links) {
+generate_destfiles <- function(type, link) {
   base_dir <- tools::R_user_dir("ropenbudgetph", "data")
-  directories <- file.path(base_dir, c("gaa", "nep"))
+  dirs <- file.path(base_dir, type)
+  names(dirs) <- type
 
-  invisible(lapply(directories, \(directory) {
-    if (!dir.exists(directory)) {
-      dir.create(directory, recursive = TRUE)
-    }
+  invisible(lapply(dirs, \(directory) {
+    if (!dir.exists(directory)) dir.create(directory, recursive = TRUE)
   }))
 
-  destfiles <- ifelse(
-    grepl("GAA", download_links),
-    file.path(directories[1], basename(download_links)),
-    file.path(directories[2], basename(download_links))
-  )
+  link_type <- sub(".*((?:GAA)|(?:NEP)).*", "\\1", basename(link)) |> tolower()
+  destfiles <- file.path(dirs[link_type], basename(link))
+
+  return(destfiles)
 }
 
 get_budget_pages <- function(doc_type, year = NULL) {
