@@ -34,7 +34,7 @@ get_docs <- function(type = "all", year = "all") {
   }
   if (year == "all") {
     year <- lapply(type, function(type) {
-      2020:check_recent_year(type)
+      2020:get_recent_yr(type)
     })
   }
   if (!is.list(year)) {

@@ -1,10 +1,12 @@
 DBM_URL <- "https://www.dbm.gov.ph"
 
-# look for the most recent fiscal year a document is available
-check_recent_year <- function(doc_type) {
-  if (!curl::has_internet()) {
-    stop("No internet connection")
-  }
+DOC_TYPES <- c(
+  gaa = "General Appropriations Act",
+  nep = "National Expenditure Program"
+)
+
+# TODO vectorize the result
+get_recent_yr <- function(doc_type) {
   pages <- get_budget_pages(doc_type)
   year <- gsub(".*/(\\d{4})/.*", "\\1", pages) |>
     as.numeric() |>
