@@ -8,10 +8,10 @@
 #' @param type A character string or vector specifying the type of budget document(s) to download:
 #'   * `"gaa"`; General Appropriations Act
 #'   * `"nep"`; National Expenditure Program
-#'   * `"all"` (the default); equivalent to `c("gaa", "nep")`
+#'   * `NULL` (the default); equivalent to `c("gaa", "nep")`
 #'
 #' @param year A list (or coercible to one) specifying the fiscal year(s) to download.
-#'   The default value is `"all"` the years available.
+#'   The default value is `NULL` or all the years supported for download. (currently 2020 up to the most recent fiscal year)
 #'   If more than one `type` is set, a single `year` value or vector will be recycled.
 #'
 #' @returns Invisibly returns `NULL` (called for side effects).
@@ -21,14 +21,13 @@
 #' get_docs() # downloads all GAA and NEP Excel files from all the years available
 #'
 #' # equivalent calls----
-#' get_docs("all", 2020:2024) # the year value will be recycled for each type
+#' get_docs(2020:2024) # the year value will be recycled for each type
 #' get_docs(c("gaa", "nep"), list(2020:2024, 2020:2024))
 #' }
 #' @seealso
 #'   [get_gaa()] to download GAA documents
 #'   [get_nep()] to download NEP documents
-get_docs <- function(type = "all", year = "all") {
-  if (!curl::has_internet()) stop("No internet connection")
+get_docs <- function(type = NULL, year = NULL) {
   if (type == "all") {
     type <- c("gaa", "nep")
   }
@@ -38,7 +37,7 @@ get_docs <- function(type = "all", year = "all") {
     })
   }
   if (!is.list(year)) {
-    year <- as.list(year)
+    year <- list(year)
   }
   if (length(year) == 1) {
     year <- rep(year, length(type))
@@ -65,7 +64,7 @@ get_docs <- function(type = "all", year = "all") {
 #' \dontrun{
 #' get_gaa() # Downloads all GAA files from 2020 onwards
 #' }
-get_gaa <- function(year = "all") {
+get_gaa <- function(year = NULL) {
   get_docs("gaa", year)
 }
 
@@ -84,6 +83,6 @@ get_gaa <- function(year = "all") {
 #' \dontrun{
 #' get_nep() # Downloads all NEP files from 2020 onwards
 #' }
-get_nep <- function(year = "all") {
+get_nep <- function(year = NULL) {
   get_docs("nep", year)
 }
