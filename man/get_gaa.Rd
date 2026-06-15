@@ -4,11 +4,11 @@
 \alias{get_gaa}
 \title{Download GAA documents}
 \usage{
-get_gaa(year = "all")
+get_gaa(year = NULL)
 }
 \arguments{
 \item{year}{A list (or coercible to one) specifying the fiscal year(s) to download.
-The default value is \code{"all"} the years available.
+The default value is \code{NULL} or all the years supported for download. (currently 2020 up to the most recent fiscal year)
 If more than one \code{type} is set, a single \code{year} value or vector will be recycled.}
 }
 \value{
@@ -21,6 +21,6 @@ Department of Budget and Management (DBM) website
 }
 \examples{
 \dontrun{
-  get_gaa() # Downloads all GAA files from 2020 onwards
+get_gaa() # Downloads all GAA files from 2020 onwards
 }
 }

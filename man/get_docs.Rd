@@ -4,18 +4,18 @@
 \alias{get_docs}
 \title{Bulk download budget documents}
 \usage{
-get_docs(type = "all", year = "all")
+get_docs(type = NULL, year = NULL)
 }
 \arguments{
 \item{type}{A character string or vector specifying the type of budget document(s) to download:
 \itemize{
 \item \code{"gaa"}; General Appropriations Act
 \item \code{"nep"}; National Expenditure Program
-\item \code{"all"} (the default); equivalent to \code{c("gaa", "nep")}
+\item \code{NULL} (the default); equivalent to \code{c("gaa", "nep")}
 }}
 
 \item{year}{A list (or coercible to one) specifying the fiscal year(s) to download.
-The default value is \code{"all"} the years available.
+The default value is \code{NULL} or all the years supported for download. (currently 2020 up to the most recent fiscal year)
 If more than one \code{type} is set, a single \code{year} value or vector will be recycled.}
 }
 \value{
@@ -31,12 +31,11 @@ from the Department of Budget and Management (DBM) website:
 }
 \examples{
 \dontrun{
-  get_docs()  # downloads all GAA and NEP Excel files from all the years available
+get_docs() # downloads all GAA and NEP Excel files from all the years available
 
-  # equivalent calls----
-  get_docs("all", 2020:2024) # the year value will be recycled for each type
-  get_docs(c("gaa", "nep"), list(2020:2024, 2020:2024))
-
+# equivalent calls----
+get_docs(2020:2024) # the year value will be recycled for each type
+get_docs(c("gaa", "nep"), list(2020:2024, 2020:2024))
 }
 }
 \seealso{
