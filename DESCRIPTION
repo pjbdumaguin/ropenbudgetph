@@ -13,4 +13,7 @@ Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
 Imports: 
     httr2,
-    xml2
+    xml2,
+    tools,
+    rlang,
+    curl
