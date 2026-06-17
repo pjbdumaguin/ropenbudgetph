@@ -4,14 +4,19 @@ DOC_TYPES <- c(
   gaa = "General Appropriations Act",
   nep = "National Expenditure Program"
 )
+the <- new.env(parent = emptyenv())
+the$FISCAL_YEARS <- NULL
 
-# TODO vectorize the result
-get_recent_yr <- function(doc_type) {
-  pages <- get_budget_pages(doc_type)
-  year <- gsub(".*/(\\d{4})/.*", "\\1", pages) |>
-    as.numeric() |>
-    max()
-  return(year)
+# assigns a list of budget document type and fiscal years supported for download, to FISCAL_YEARS object
+load_fys <- function() {
+  pages <- get_budget_pages(names(DOC_TYPES))
+  doc_fy <- lapply(DOC_TYPES, function(dt) {
+    pages[agrep(dt, basename(pages), ignore.case = TRUE)] |> 
+      gsub(".*/(\\d{4})/.*", "\\1", x = _) |> 
+      as.numeric() |> 
+      sort()
+  })
+  the$FISCAL_YEARS <- doc_fy
 }
 
 download_docs <- function(type, year) {
@@ -63,7 +68,7 @@ get_budget_pages <- function(doc_type, year = NULL) {
   pattern <- paste0("(?<=/\\d{4}/)(", pattern, ")", collapse = "|")
   budget_fys <- grepv(pattern, budget_fys, perl = TRUE) |> unique()
 
-  # filter by year if not null
+  # filter by year if specified
   if (!is.null(year)) {
     budget_fys <- grepv(paste(year, collapse = "|"), budget_fys)
   }
