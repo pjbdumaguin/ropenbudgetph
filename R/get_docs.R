@@ -28,25 +28,79 @@
 #'   [get_gaa()] to download GAA documents
 #'   [get_nep()] to download NEP documents
 get_docs <- function(type = NULL, year = NULL) {
-  if (type == "all") {
-    type <- c("gaa", "nep")
+  if (!curl::has_internet()) {
+    stop("Connect to the internet to proceed.")
   }
-  if (year == "all") {
-    year <- lapply(type, function(type) {
-      2020:get_recent_yr(type)
-    })
+
+  type <- type %||% names(DOC_TYPES)
+  # if `year` is a named list, overwrite the `type`
+  if (is.list(year) && !is.null(names(year))) {
+    type <- names(year)
   }
+
+  if (!is.character(type)) {
+    stop("`type` must be character, not ", class(type))
+  }
+
+  if (length(type) <= 0 || length(type) > length(DOC_TYPES)) {
+    stop(
+      "`type` length, invalid: ", length(type),
+      "\ninput `type` length can't be longer than currently supported: ", length(DOC_TYPES)
+    )
+  }
+
+  type_invalid <- type %notin% names(DOC_TYPES)
+  if (any(type_invalid)) {
+    stop(
+      "invalid budget document: ", toString(type[type_invalid], width = 12),
+      "\ncurrently supported: ", paste0('"', names(DOC_TYPES), '"', collapse = ", ")
+    )
+  }
+
+  if (is.null(the$FISCAL_YEARS)) {
+    load_fys()
+  }
+  year <- year %||% the$FISCAL_YEARS[type]
+
+  if (!is.numeric(year)) {
+    if (!is.list(year) || !all(vapply(year, is.numeric, logical(1)))) {
+      stop("`year` must be numeric or a list of numeric vectors")
+    }
+  }
+
   if (!is.list(year)) {
     year <- list(year)
   }
-  if (length(year) == 1) {
-    year <- rep(year, length(type))
+
+  if (length(year) <= 0 || length(year) > length(type)) {
+    stop("`year` length, invalid: ", length(year),
+    "\nthere should only be one (set of) `year`(s) per input `type`"    
+    )
   }
-  if (length(type) != length(year)) {
-    stop("type and year must have the same length")
+
+  input_yr <- unique(unlist(year))
+  supported_yr <- unique(unlist(the$FISCAL_YEARS[type]))
+  if (any(input_yr %notin% supported_yr)) {
+    stop(
+      "`year` unsupported: ",
+      toString(input_yr[input_yr %notin% supported_yr], width = 16)
+    )
   }
-  names(year) <- type
-  download_docs(type, year)
+
+  if (length(year) < length(type)) {
+    if (length(type) %% length(year) != 0) {
+      warning(sprintf(
+          "Length of `type` (%i) is not a multiple of length `year` (%i)",
+          length(type), length(year)
+        )
+      )
+    }
+    year <- rep(year, length.out = length(type))
+  }
+
+  if(is.null(names(year))) names(year) <- type
+  # download_docs(type, year)
+  print(year)
 }
 
 #' Download GAA documents
@@ -70,7 +124,7 @@ get_gaa <- function(year = NULL) {
 
 #' Download NEP documents
 #'
-#' #' A wrapper for `get_docs(type = "nep")`; this function downloads the
+#' A wrapper for `get_docs(type = "nep")`; this function downloads the
 #' General Appropriations Act (GAA) Excel files (.xlsx) from the
 #' Department of Budget and Management (DBM) website
 #'
