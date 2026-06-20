@@ -32,28 +32,32 @@ get_docs <- function(type = NULL, year = NULL) {
     stop("internet connection not detected\n\tplease connect and try again")
   }
 
-  type <- type %||% names(DOC_TYPES)
+  type <- type %||% names(the$DOC_TYPES)
   # if `year` is a named list, overwrite the `type`
   if (is.list(year) && !is.null(names(year))) {
     type <- names(year)
   }
 
   if (!is.character(type)) {
-    stop("`type` must be character, not ", class(type))
+    stop("`type` must be character, not ", typeof(type))
   }
 
-  if (length(type) <= 0 || length(type) > length(DOC_TYPES)) {
+  if (length(type) <= 0 || length(type) > length(the$DOC_TYPES)) {
     stop(
-      "`type` length, invalid: ", length(type),
-      "\ninput `type` length can't be longer than currently supported: ", length(DOC_TYPES)
+      "`type` length, invalid: ",
+      length(type),
+      "\ninput `type` length can't be longer than currently supported: ",
+      length(the$DOC_TYPES)
     )
   }
 
-  type_invalid <- type %notin% names(DOC_TYPES)
+  type_invalid <- type %notin% names(the$DOC_TYPES)
   if (any(type_invalid)) {
     stop(
-      "invalid budget document: ", toString(type[type_invalid], width = 12),
-      "\ncurrently supported: ", paste0('"', names(DOC_TYPES), '"', collapse = ", ")
+      "invalid budget document: ",
+      toString(type[type_invalid], width = 12),
+      "\ncurrently supported: ",
+      paste0('"', names(the$DOC_TYPES), '"', collapse = ", ")
     )
   }
 

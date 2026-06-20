@@ -1,16 +1,20 @@
 DBM_URL <- "https://www.dbm.gov.ph"
 
-DOC_TYPES <- c(
+the <- new.env(parent = emptyenv())
+the$DOC_TYPES <- c(
   gaa = "General Appropriations Act",
   nep = "National Expenditure Program"
 )
-the <- new.env(parent = emptyenv())
 the$FISCAL_YEARS <- NULL
+
+has_connection <- function() {
+  curl::has_internet()
+}
 
 # assigns a list of budget document type and fiscal years supported for download, to FISCAL_YEARS object
 load_fys <- function() {
-  pages <- get_budget_pages(names(DOC_TYPES))
-  doc_fy <- lapply(DOC_TYPES, function(dt) {
+  pages <- get_budget_pages(names(the$DOC_TYPES))
+  doc_fy <- lapply(the$DOC_TYPES, function(dt) {
     pages[agrep(dt, basename(pages), ignore.case = TRUE)] |> 
       gsub(".*/(\\d{4})/.*", "\\1", x = _) |> 
       as.numeric() |> 
@@ -64,7 +68,7 @@ get_budget_pages <- function(doc_type, year = NULL) {
   budget_main <- paste0(DBM_URL, "/index.php/budget")
   budget_fys <- get_links(budget_main)
 
-  pattern <- gsub(" ", "-", DOC_TYPES[doc_type]) |> tolower()
+  pattern <- gsub(" ", "-", the$DOC_TYPES[doc_type]) |> tolower()
   pattern <- paste0("(?<=/\\d{4}/)(", pattern, ")", collapse = "|")
   budget_fys <- grepv(pattern, budget_fys, perl = TRUE) |> unique()
 
