@@ -1,0 +1,66 @@
+wmb_wrap <- function(code, con = TRUE, ...) {
+  with_mocked_bindings(
+    code = code,
+    has_connection = function() con,
+    load_fys = function() {
+      the$FISCAL_YEARS <- list(
+        gaa = c(2020:2026),
+        nep = c(2020:2026)
+      )
+    },
+    download_docs = function() NULL,
+    ...
+  )
+}
+
+test_that("errors without internet", {
+  wmb_wrap(
+    con = FALSE,
+    code = expect_error(get_docs(), "connection not detected")
+  )
+})
+
+test_that(
+  "invalid inputs are rejected",
+  wmb_wrap({
+    expect_error(get_docs(1), "must be character")
+    expect_error(get_docs(character()), "length, invalid")
+    expect_error(get_docs(c("gaa", "gaa", "nep")), "length, invalid")
+    expect_error(get_docs(c("gae", "nea")), "invalid budget document")
+    expect_error(get_gaa("a"), "must be numeric")
+    expect_error(get_gaa(list(c(1, "a"))), "must be numeric")
+    expect_error(get_nep(list()), "length, invalid")
+    expect_error(
+      get_nep(rep(list(2020), length(the$DOC_TYPES))),
+      "length, invalid"
+    )
+    expect_error(get_docs(year = 1), "`year` unsupported")
+  })
+)
+
+test_that(
+  "duplicate warning is emitted",
+  wmb_wrap({
+    expect_warning(
+      get_docs(year = list(gaa = 2020, gaa = 2021)),
+      "`type` duplicates found"
+    )
+  })
+)
+
+# test_that("recycling warning is emitted", {
+#   wmb_wrap(
+#     code = expect_warning(
+#       get_docs(year = rep(list(2020), 2)),
+#       "not a multiple"
+#     ),
+#     con = TRUE,
+#     load_dt = function() {
+#       the$DOC_TYPES <- c(
+#         gaa = "General Appropriations Act",
+#         nep = "National Expenditure Program",
+#         fake = "Fake Document Type"
+#       )
+#     }
+#   )
+# })
