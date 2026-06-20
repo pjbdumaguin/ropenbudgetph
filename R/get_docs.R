@@ -61,6 +61,15 @@ get_docs <- function(type = NULL, year = NULL) {
     )
   }
 
+  if (anyDuplicated(type)) {
+    is_dup <- duplicated(type)
+    if (!(is.list(year) && is.null(names(year)))) {
+      year <- year[!is_dup]
+    }
+    type <- unique(type)
+    warning("`type` duplicates found; repeats removed")
+  }
+
   if (is.null(the$FISCAL_YEARS)) {
     load_fys()
   }
