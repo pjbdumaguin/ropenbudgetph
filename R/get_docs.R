@@ -28,8 +28,8 @@
 #'   [get_gaa()] to download GAA documents
 #'   [get_nep()] to download NEP documents
 get_docs <- function(type = NULL, year = NULL) {
-  if (!curl::has_internet()) {
-    stop("Connect to the internet to proceed.")
+  if (!has_connection()) {
+    stop("internet connection not detected\n\tplease connect and try again")
   }
 
   type <- type %||% names(DOC_TYPES)
@@ -73,8 +73,10 @@ get_docs <- function(type = NULL, year = NULL) {
   }
 
   if (length(year) <= 0 || length(year) > length(type)) {
-    stop("`year` length, invalid: ", length(year),
-    "\nthere should only be one (set of) `year`(s) per input `type`"    
+    stop(
+      "`year` length, invalid: ",
+      length(year),
+      "\nthere should only be one (set of) `year`(s) per input `type`"
     )
   }
 
@@ -90,15 +92,17 @@ get_docs <- function(type = NULL, year = NULL) {
   if (length(year) < length(type)) {
     if (length(type) %% length(year) != 0) {
       warning(sprintf(
-          "Length of `type` (%i) is not a multiple of length `year` (%i)",
-          length(type), length(year)
-        )
-      )
+        "Length of `type` (%i) is not a multiple of length `year` (%i)",
+        length(type),
+        length(year)
+      ))
     }
     year <- rep(year, length.out = length(type))
   }
 
-  if(is.null(names(year))) names(year) <- type
+  if (is.null(names(year))) {
+    names(year) <- type
+  }
   # download_docs(type, year)
   print(year)
 }
