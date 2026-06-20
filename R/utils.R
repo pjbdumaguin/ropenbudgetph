@@ -1,23 +1,29 @@
 DBM_URL <- "https://www.dbm.gov.ph"
 
 the <- new.env(parent = emptyenv())
-the$DOC_TYPES <- c(
-  gaa = "General Appropriations Act",
-  nep = "National Expenditure Program"
-)
+the$DOC_TYPES <- NULL
 the$FISCAL_YEARS <- NULL
 
+# for mocking purposes
 has_connection <- function() {
   curl::has_internet()
 }
 
+load_dt <- function() {
+  the$DOC_TYPES <- c(
+    gaa = "General Appropriations Act",
+    nep = "National Expenditure Program"
+  )
+}
+
 # assigns a list of budget document type and fiscal years supported for download, to FISCAL_YEARS object
 load_fys <- function() {
+  if(is.null(the$DOC_TYPES)) load_dt()
   pages <- get_budget_pages(names(the$DOC_TYPES))
   doc_fy <- lapply(the$DOC_TYPES, function(dt) {
-    pages[agrep(dt, basename(pages), ignore.case = TRUE)] |> 
-      gsub(".*/(\\d{4})/.*", "\\1", x = _) |> 
-      as.numeric() |> 
+    pages[agrep(dt, basename(pages), ignore.case = TRUE)] |>
+      gsub(".*/(\\d{4})/.*", "\\1", x = _) |>
+      as.numeric() |>
       sort()
   })
   the$FISCAL_YEARS <- doc_fy
@@ -67,7 +73,8 @@ generate_destfiles <- function(type, link) {
 get_budget_pages <- function(doc_type, year = NULL) {
   budget_main <- paste0(DBM_URL, "/index.php/budget")
   budget_fys <- get_links(budget_main)
-
+  
+  if(is.null(the$DOC_TYPES)) load_dt()
   pattern <- gsub(" ", "-", the$DOC_TYPES[doc_type]) |> tolower()
   pattern <- paste0("(?<=/\\d{4}/)(", pattern, ")", collapse = "|")
   budget_fys <- grepv(pattern, budget_fys, perl = TRUE) |> unique()

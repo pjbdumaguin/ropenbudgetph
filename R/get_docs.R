@@ -32,6 +32,7 @@ get_docs <- function(type = NULL, year = NULL) {
     stop("internet connection not detected\n\tplease connect and try again")
   }
 
+  if(is.null(the$DOC_TYPES)) load_dt()
   type <- type %||% names(the$DOC_TYPES)
   # if `year` is a named list, overwrite the `type`
   if (is.list(year) && !is.null(names(year))) {
