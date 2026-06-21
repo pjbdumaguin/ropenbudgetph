@@ -2,14 +2,15 @@ wmb_wrap <- function(code, con = TRUE, ...) {
   with_mocked_bindings(
     code = code,
     has_connection = function() con,
-    load_fys = function() {
-      the$FISCAL_YEARS <- list(
+    ...,
+    get_fys = function() {
+      doc_fys <- list(
         gaa = c(2020:2026),
         nep = c(2020:2026)
       )
+      return(doc_fys)
     },
-    download_docs = function() NULL,
-    ...
+    download_docs = function() NULL
   )
 }
 
@@ -31,7 +32,7 @@ test_that(
     expect_error(get_gaa(list(c(1, "a"))), "must be numeric")
     expect_error(get_nep(list()), "length, invalid")
     expect_error(
-      get_nep(rep(list(2020), length(the$DOC_TYPES))),
+      get_nep(rep(list(2020), length(get_doc_ls()))),
       "length, invalid"
     )
     expect_error(get_docs(year = 1), "`year` unsupported")
@@ -48,19 +49,19 @@ test_that(
   })
 )
 
-# test_that("recycling warning is emitted", {
-#   wmb_wrap(
-#     code = expect_warning(
-#       get_docs(year = rep(list(2020), 2)),
-#       "not a multiple"
-#     ),
-#     con = TRUE,
-#     load_dt = function() {
-#       the$DOC_TYPES <- c(
-#         gaa = "General Appropriations Act",
-#         nep = "National Expenditure Program",
-#         fake = "Fake Document Type"
-#       )
-#     }
-#   )
-# })
+test_that("recycling warning is emitted", {
+  wmb_wrap(
+    code = expect_warning(
+      get_docs(year = rep(list(2020), 2)),
+      "not a multiple"
+    ),
+    get_doc_ls = function() {
+      doc_types <- c(
+        gaa = "General Appropriations Act",
+        nep = "National Expenditure Program",
+        fake = "Fake Document Type"
+      )
+      return(doc_types)
+    }
+  )
+})

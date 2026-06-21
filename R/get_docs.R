@@ -32,8 +32,7 @@ get_docs <- function(type = NULL, year = NULL) {
     stop("internet connection not detected\n\tplease connect and try again")
   }
 
-  if(is.null(the$DOC_TYPES)) load_dt()
-  type <- type %||% names(the$DOC_TYPES)
+  type <- type %||% names(get_doc_ls())
   # if `year` is a named list, overwrite the `type`
   if (is.list(year) && !is.null(names(year))) {
     type <- names(year)
@@ -43,22 +42,22 @@ get_docs <- function(type = NULL, year = NULL) {
     stop("`type` must be character, not ", typeof(type))
   }
 
-  if (length(type) <= 0 || length(type) > length(the$DOC_TYPES)) {
+  if (length(type) <= 0 || length(type) > length(get_doc_ls())) {
     stop(
       "`type` length, invalid: ",
       length(type),
       "\ninput `type` length can't be longer than currently supported: ",
-      length(the$DOC_TYPES)
+      length(get_doc_ls())
     )
   }
 
-  type_invalid <- type %notin% names(the$DOC_TYPES)
+  type_invalid <- type %notin% names(get_doc_ls())
   if (any(type_invalid)) {
     stop(
       "invalid budget document: ",
       toString(type[type_invalid], width = 12),
       "\ncurrently supported: ",
-      paste0('"', names(the$DOC_TYPES), '"', collapse = ", ")
+      paste0('"', names(get_doc_ls()), '"', collapse = ", ")
     )
   }
 
@@ -71,10 +70,7 @@ get_docs <- function(type = NULL, year = NULL) {
     warning("`type` duplicates found; repeats removed")
   }
 
-  if (is.null(the$FISCAL_YEARS)) {
-    load_fys()
-  }
-  year <- year %||% the$FISCAL_YEARS[type]
+  year <- year %||% get_fys()[type]
 
   if (!is.numeric(year)) {
     if (!is.list(year) || !all(vapply(year, is.numeric, logical(1)))) {
@@ -95,7 +91,7 @@ get_docs <- function(type = NULL, year = NULL) {
   }
 
   input_yr <- unique(unlist(year))
-  supported_yr <- unique(unlist(the$FISCAL_YEARS[type]))
+  supported_yr <- unique(unlist(get_fys()[type]))
   if (any(input_yr %notin% supported_yr)) {
     stop(
       "`year` unsupported: ",
