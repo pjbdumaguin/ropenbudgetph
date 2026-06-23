@@ -29,7 +29,7 @@ download_docs <- function(type, year) {
   links <- get_download_links(type, year)
   destfiles <- generate_destfiles(type, links)
   mapply(
-    function(link, destfile) download.file(link, destfile),
+    function(link, destfile) utils::download.file(link, destfile),
     links,
     destfiles
   )
