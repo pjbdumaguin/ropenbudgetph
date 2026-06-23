@@ -1,4 +1,4 @@
-wmb_wrap <- function(code, con = TRUE, ...) {
+mock_get_docs <- function(code, con = TRUE, ...) {
   with_mocked_bindings(
     code = code,
     has_connection = function() con,
@@ -15,7 +15,7 @@ wmb_wrap <- function(code, con = TRUE, ...) {
 }
 
 test_that("errors without internet", {
-  wmb_wrap(
+  mock_get_docs(
     con = FALSE,
     code = expect_error(get_docs(), "connection not detected")
   )
@@ -23,7 +23,7 @@ test_that("errors without internet", {
 
 test_that(
   "invalid inputs are rejected",
-  wmb_wrap({
+  mock_get_docs({
     expect_error(get_docs(1), "must be character")
     expect_error(get_docs(character()), "length, invalid")
     expect_error(get_docs(c("gaa", "gaa", "nep")), "length, invalid")
@@ -41,7 +41,7 @@ test_that(
 
 test_that(
   "duplicate warning is emitted",
-  wmb_wrap({
+  mock_get_docs({
     expect_warning(
       get_docs(year = list(gaa = 2020, gaa = 2021)),
       "`type` duplicates found"
@@ -50,7 +50,7 @@ test_that(
 )
 
 test_that("recycling warning is emitted", {
-  wmb_wrap(
+  mock_get_docs(
     code = expect_warning(
       get_docs(year = rep(list(2020), 2)),
       "not a multiple"
