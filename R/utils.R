@@ -70,7 +70,6 @@ get_budget_pages <- function(doc_type, year = NULL) {
   budget_main <- paste0(DBM_URL, "/index.php/budget")
   budget_fys <- get_links(budget_main)
   
-  if(is.null(get_doc_ls())) load_dt()
   pattern <- gsub(" ", "-", get_doc_ls()[doc_type]) |> tolower()
   pattern <- paste0("(?<=/\\d{4}/)(", pattern, ")", collapse = "|")
   budget_fys <- grepv(pattern, budget_fys, perl = TRUE) |> unique()
