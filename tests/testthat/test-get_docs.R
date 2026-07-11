@@ -1,67 +1,54 @@
-mock_get_docs <- function(code, con = TRUE, ...) {
+mock_get_docs <- function(expr, no_internet = FALSE, fys = NULL, doc_ls = NULL) {
   with_mocked_bindings(
-    code = code,
-    has_connection = function() con,
-    ...,
-    get_fys = function() {
-      doc_fys <- list(
-        gaa = c(2020:2026),
-        nep = c(2020:2026)
-      )
-      return(doc_fys)
+    {
+      expr
     },
+    no_internet = function() no_internet,
+    get_doc_ls = function() doc_ls %||% c(
+      gaa = "General Appropriations Act",
+      nep = "National Expenditure Program"
+    ),
+    get_fys = function() fys %||% list(gaa = 2020:2026, nep = 2020:2026),
     download_docs = function() NULL
   )
 }
 
 test_that("errors without internet", {
-  mock_get_docs(
-    con = FALSE,
-    code = expect_error(get_docs(), "connection not detected")
-  )
+  mock_get_docs({
+    expect_error(get_docs(), "internet connection not detected")
+  }, no_internet = TRUE)
 })
 
-test_that(
-  "invalid inputs are rejected",
+test_that("invalid inputs are rejected", {
   mock_get_docs({
-    expect_error(get_docs(1), "must be character")
-    expect_error(get_docs(character()), "length, invalid")
-    expect_error(get_docs(c("gaa", "gaa", "nep")), "length, invalid")
+    expect_error(get_docs(1), "`type` must be character")
+    expect_error(get_docs(character()), "`type` must not be empty")
     expect_error(get_docs(c("gae", "nea")), "invalid budget document")
-    expect_error(get_gaa("a"), "must be numeric")
-    expect_error(get_gaa(list(c(1, "a"))), "must be numeric")
-    expect_error(get_nep(list()), "length, invalid")
-    expect_error(
-      get_nep(rep(list(2020), length(get_doc_ls()))),
-      "length, invalid"
-    )
+    expect_error(get_gaa("a"), "`year` must be numeric")
+    expect_error(get_nep(list()), "`year` must not be empty")
+    expect_error(get_nep(list(2020, 2021)), "`year` length cannot exceed `type` length")
     expect_error(get_docs(year = 1), "`year` unsupported")
   })
-)
+})
 
-test_that(
-  "duplicate warning is emitted",
+test_that("duplicate warning is emitted", {
   mock_get_docs({
     expect_warning(
-      get_docs(year = list(gaa = 2020, gaa = 2021)),
+      get_docs(type = c("gaa", "gaa")),
       "`type` duplicates found"
     )
   })
-)
+})
 
 test_that("recycling warning is emitted", {
-  mock_get_docs(
-    code = expect_warning(
+  mock_get_docs({
+    expect_warning(
       get_docs(year = rep(list(2020), 2)),
       "not a multiple"
-    ),
-    get_doc_ls = function() {
-      doc_types <- c(
-        gaa = "General Appropriations Act",
-        nep = "National Expenditure Program",
-        fake = "Fake Document Type"
-      )
-      return(doc_types)
-    }
-  )
+    )
+  }, doc_ls = c(
+    gaa = "General Appropriations Act",
+    nep = "National Expenditure Program",
+    fake = "Fake Document Type"
+  ))
 })
