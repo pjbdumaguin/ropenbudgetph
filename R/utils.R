@@ -1,8 +1,12 @@
 DBM_URL <- "https://www.dbm.gov.ph"
 
 # for mocking purposes
-has_connection <- function() {
-  curl::has_internet()
+no_internet <- function() {
+  !curl::has_internet()
+}
+
+check_internet <- function() {
+  if (no_internet()) stop("internet connection not detected\n\tplease connect and try again")
 }
 
 get_doc_ls <- function() {

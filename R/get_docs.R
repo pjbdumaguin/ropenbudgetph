@@ -28,93 +28,10 @@
 #'   [get_gaa()] to download GAA documents
 #'   [get_nep()] to download NEP documents
 get_docs <- function(type = NULL, year = NULL) {
-  if (!has_connection()) {
-    stop("internet connection not detected\n\tplease connect and try again")
-  }
-
-  type <- type %||% names(get_doc_ls())
-  # if `year` is a named list, overwrite the `type`
-  if (is.list(year) && !is.null(names(year))) {
-    type <- names(year)
-  }
-
-  if (!is.character(type)) {
-    stop("`type` must be character, not ", typeof(type))
-  }
-
-  if (length(type) <= 0 || length(type) > length(get_doc_ls())) {
-    stop(
-      "`type` length, invalid: ",
-      length(type),
-      "\ninput `type` length can't be longer than currently supported: ",
-      length(get_doc_ls())
-    )
-  }
-
-  type_invalid <- type %notin% names(get_doc_ls())
-  if (any(type_invalid)) {
-    stop(
-      "invalid budget document: ",
-      toString(type[type_invalid], width = 12),
-      "\ncurrently supported: ",
-      paste0('"', names(get_doc_ls()), '"', collapse = ", ")
-    )
-  }
-
-  if (anyDuplicated(type)) {
-    is_dup <- duplicated(type)
-    if (!(is.list(year) && is.null(names(year)))) {
-      year <- year[!is_dup]
-    }
-    type <- unique(type)
-    warning("`type` duplicates found; repeats removed")
-  }
-
-  year <- year %||% get_fys()[type]
-
-  if (!is.numeric(year)) {
-    if (!is.list(year) || !all(vapply(year, is.numeric, logical(1)))) {
-      stop("`year` must be numeric or a list of numeric vectors")
-    }
-  }
-
-  if (!is.list(year)) {
-    year <- list(year)
-  }
-
-  if (length(year) <= 0 || length(year) > length(type)) {
-    stop(
-      "`year` length, invalid: ",
-      length(year),
-      "\nthere should only be one (set of) `year`(s) per input `type`"
-    )
-  }
-
-  input_yr <- unique(unlist(year))
-  supported_yr <- unique(unlist(get_fys()[type]))
-  if (any(input_yr %notin% supported_yr)) {
-    stop(
-      "`year` unsupported: ",
-      toString(input_yr[input_yr %notin% supported_yr], width = 16)
-    )
-  }
-
-  if (length(year) < length(type)) {
-    if (length(type) %% length(year) != 0) {
-      warning(sprintf(
-        "Length of `type` (%i) is not a multiple of length `year` (%i)",
-        length(type),
-        length(year)
-      ))
-    }
-    year <- rep(year, length.out = length(type))
-  }
-
-  if (is.null(names(year))) {
-    names(year) <- type
-  }
-  # download_docs(type, year)
-  print(year)
+  check_internet()
+  args <- normalize_args(type, year)
+  # download_docs(args$type, args$year)
+  print(args)
 }
 
 #' Download GAA documents
@@ -154,3 +71,61 @@ get_gaa <- function(year = NULL) {
 get_nep <- function(year = NULL) {
   get_docs("nep", year)
 }
+
+assert_type <- function(type, supported) {
+  if (is.null(type)) stop("`type` cannot be NULL")
+  if (!is.character(type)) stop("`type` must be character, not ", typeof(type))
+  if (!length(type)) stop("`type` must not be empty")
+
+  bad <- type %notin% names(supported)
+  if (any(bad)) stop("invalid budget document: ", toString(type[bad]))
+
+  if (anyDuplicated(type)) {
+    warning("`type` duplicates found; repeats removed")
+    type <- unique(type)
+  }
+
+  type
+}
+
+assert_year <- function(year, type, fys) {
+  if (is.null(year)) stop("`year` cannot be NULL")
+  if (!(is.numeric(year) || (is.list(year) && all(vapply(year, is.numeric, logical(1)))))) {
+    stop("`year` must be numeric or a list of numeric vectors")
+  }
+
+  if (!is.list(year)) year <- list(year)
+  if (!length(year)) stop("`year` must not be empty")
+  if (length(year) > length(type)) stop("`year` length cannot exceed `type` length")
+
+  yr <- unique(unlist(year, use.names = FALSE))
+  supported_yr <- unique(unlist(fys[type], use.names = FALSE))
+  bad <- yr %notin% supported_yr
+  if (any(bad)) stop("`year` unsupported: ", toString(yr[bad]))
+
+  if (length(year) < length(type)) {
+    if (length(type) %% length(year) != 0) {
+      warning(sprintf(
+        "Length of `type` (%i) is not a multiple of length `year` (%i)",
+        length(type), length(year)
+      ))
+    }
+    year <- rep(year, length.out = length(type))
+  }
+
+  if (is.null(names(year))) names(year) <- type
+  year
+}
+
+normalize_args <- function(type = NULL, year = NULL, supported = get_doc_ls(), fys = get_fys()) {
+  if (is.null(type)) type <- names(supported)
+  if (is.list(year) && !is.null(names(year))) type <- names(year)
+
+  type <- assert_type(type, supported)
+
+  if (is.null(year)) year <- fys[type]
+  year <- assert_year(year, type, fys)
+
+  list(type = type, year = year)
+}
+
